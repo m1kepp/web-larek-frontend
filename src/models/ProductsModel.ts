@@ -1,24 +1,41 @@
 import { ICardData } from '../components/Card';
+import { EventEmitter } from '../components/base/events';
 export class ProductsModel {
-  private products: ICardData[] = [];
 
-  setProducts(products: ICardData[]) {
+    private products: ICardData[] = [];
 
-    this.products = products;
 
-  }
+    constructor(
+        private events: EventEmitter
+    ) {}
 
-  getProducts(): ICardData[] {
 
-    return this.products;
+    setProducts(products: ICardData[]) {
 
-  }
+        this.products = products;
 
-  getProduct(id:string): ICardData | undefined {
 
-    return this.products.find(
-        item => item.id === id
-    );
+        this.events.emit(
+            'products:changed',
+            this.products
+        );
 
-  }
+    }
+
+
+    getProducts(): ICardData[] {
+
+        return this.products;
+
+    }
+
+
+    getProduct(id:string): ICardData | undefined {
+
+        return this.products.find(
+            item => item.id === id
+        );
+
+    }
+
 }

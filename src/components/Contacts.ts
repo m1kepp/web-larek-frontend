@@ -1,20 +1,23 @@
 import { IOrderData } from '../models/OrderModel';
+import { EventEmitter } from './base/events';
+
+
 type ContactsChange = Partial<IOrderData> & {
     submit?: boolean;
 };
+
+
 export class Contacts {
 
     protected element: HTMLElement;
-    protected onChange?: (data: ContactsChange)=>void;
 
 
     constructor(
-    element: HTMLElement,
-    onChange?: (data: ContactsChange)=>void
-    )    {
+        element: HTMLElement,
+        protected events: EventEmitter
+    ) {
 
         this.element = element;
-        this.onChange = onChange;
 
 
         const inputs =
@@ -29,66 +32,79 @@ export class Contacts {
                 'input',
                 () => {
 
-                    this.onChange?.({
 
-                        [input.name]:
-                            input.value
+                    this.events.emit(
+                        'contacts:change',
+                        {
+                            [input.name]:
+                                input.value
+                        }
+                    );
 
-                    });
-                    validate();
+
+                    this.validate();
 
                 }
             );
 
         });
-        const validate = () => {
-
-    const button =
-        this.element.querySelector(
-            'button[type="submit"]'
-        ) as HTMLButtonElement;
 
 
-    const email =
-        (
-        this.element.querySelector(
-            'input[name="email"]'
-        ) as HTMLInputElement
-        ).value;
-
-
-    const phone =
-        (
-        this.element.querySelector(
-            'input[name="phone"]'
-        ) as HTMLInputElement
-        ).value;
-
-
-    button.disabled =
-        !(email && phone);
-
-};
         const submitButton =
-    this.element.querySelector(
-        'button[type="submit"]'
-    );
+            this.element.querySelector(
+                'button[type="submit"]'
+            );
 
 
-    submitButton?.addEventListener(
-        'click',
-        (event)=>{
+        submitButton?.addEventListener(
+            'click',
+            (event) => {
 
-            event.preventDefault();
+                event.preventDefault();
 
-            this.onChange?.({
-                submit:true
-            });
 
-        }
-    );
+                this.events.emit(
+                    'contacts:submit',
+                    {
+                        submit: true
+                    }
+                );
+
+            }
+        );
+
     }
-    
+
+
+    private validate() {
+
+        const button =
+            this.element.querySelector(
+                'button[type="submit"]'
+            ) as HTMLButtonElement;
+
+
+        const email =
+            (
+                this.element.querySelector(
+                    'input[name="email"]'
+                ) as HTMLInputElement
+            ).value;
+
+
+        const phone =
+            (
+                this.element.querySelector(
+                    'input[name="phone"]'
+                ) as HTMLInputElement
+            ).value;
+
+
+        button.disabled =
+            !(email && phone);
+
+    }
+
 
     render() {
 

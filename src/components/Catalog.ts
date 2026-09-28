@@ -1,19 +1,25 @@
 import { ICardData } from './Card';
 import { Card } from './Card';
-
+import { EventEmitter } from './base/events';
 export class Catalog {
+
+    protected element: HTMLElement;
 
 
     constructor(
-        protected container: HTMLElement,
-        protected onSelect?: (product: ICardData)=>void
-    ) {}
+        element: HTMLElement,
+        protected events: EventEmitter
+    ) {
+
+        this.element = element;
+
+    }
 
 
     render(items: ICardData[]) {
 
 
-        this.container.innerHTML = '';
+        this.element.innerHTML = '';
 
 
         items.forEach(item => {
@@ -39,13 +45,16 @@ export class Catalog {
         'click',
         () => {
 
-            this.onSelect?.(item);
+            this.events.emit(
+            'product:selected',
+            item
+        );
 
         }
     );
 
 
-    this.container.append(cardElement);
+    this.element.append(cardElement);
 
 });
 

@@ -7,9 +7,10 @@ import { ProductsModel } from './models/ProductsModel';
 import { BasketModel } from './models/BasketModel';
 import { OrderModel } from './models/OrderModel';
 import { Modal } from './components/Modal';
-import { AppPresenter } from './presenters/AppPresenter';
 import { Order } from './components/Order';
 import { Contacts } from './components/Contacts';
+import { ICardData } from './components/Card';
+import { IOrderData } from './models/OrderModel';
 const events = new EventEmitter();
 
 const api = new Api(
@@ -17,12 +18,157 @@ const api = new Api(
 );
 
 
-const productsModel = new ProductsModel();
+const productsModel = new ProductsModel(events);
 
-const basketModel = new BasketModel();
+const basketModel = new BasketModel(events);
+events.on(
+    'basket:add',
+    (product: ICardData) => {
 
-const orderModel = new OrderModel();
+        basketModel.add(product);
 
+    }
+);
+events.on(
+    'basket:remove',
+    (event) => {
+
+        basketModel.remove(
+            (event as { id: string }).id
+        );
+
+    }
+);
+events.on(
+    'basket:changed',
+    () => {
+
+        updateBasketCounter();
+
+    }
+);
+const orderModel = new OrderModel(events);
+events.on(
+    'order:change',
+    (data) => {
+
+        orderModel.setData(
+            data as Partial<IOrderData>
+        );
+
+    }
+);
+
+
+events.on(
+    'contacts:change',
+    (data) => {
+
+        orderModel.setData(
+            data as Partial<IOrderData>
+        );
+
+    }
+);
+events.on(
+    'contacts:submit',
+    () => {
+
+
+        const total =
+            basketModel.getTotal();
+
+
+        api.post(
+            '/order',
+            {
+                ...orderModel.data,
+
+                items:
+                    basketModel.getItems().map(
+                        item => item.id
+                    ),
+
+                total
+
+            }
+        )
+        .then(() => {
+
+            const total =
+                basketModel.getTotal();
+
+
+            const successTemplate =
+                document.querySelector(
+                    '#success'
+                ) as HTMLTemplateElement;
+
+
+            const successElement =
+                successTemplate.content
+                .firstElementChild
+                ?.cloneNode(true) as HTMLElement;
+            const successButton =
+                successElement.querySelector(
+                    '.order-success__close'
+                );
+
+
+            successButton?.addEventListener(
+                'click',
+                () => {
+
+                    events.emit(
+                        'success:close'
+                    );
+
+                }
+            );    
+
+            const totalElement =
+                successElement.querySelector(
+                    '.order-success__description'
+                );
+
+
+            if (totalElement) {
+
+                totalElement.textContent =
+                    `Списано ${total} синапсов`;
+
+            }
+
+
+            modal.open(
+                successElement
+            );
+
+
+            basketModel.clear();
+
+        });
+
+    }
+);
+events.on(
+    'order:next',
+    () => {
+
+        modal.open(
+            contacts.render()
+        );
+
+    }
+);
+events.on(
+    'success:close',
+    () => {
+
+        modal.close();
+
+    }
+);
 
 import { Catalog } from './components/Catalog';
 
@@ -31,10 +177,20 @@ const gallery = document.querySelector('.gallery') as HTMLElement;
 
 const catalog = new Catalog(
     gallery,
+    events
+);
+const modalContainer =
+    document.querySelector('#modal-container') as HTMLElement;
+
+const modal = new Modal(modalContainer);
+events.on(
+    'product:selected',
     (product) => {
 
         const template =
-        document.querySelector('#card-preview') as HTMLTemplateElement;
+            document.querySelector(
+                '#card-preview'
+            ) as HTMLTemplateElement;
 
 
         const preview =
@@ -46,25 +202,19 @@ const catalog = new Catalog(
         const cardPreview =
             new CardPreview(
                 preview,
-                () => {
-
-                    basketModel.add(product);
-                    updateBasketCounter();
-                   
-                }
+                events
             );
 
 
         modal.open(
-            cardPreview.render(product)
+            cardPreview.render(
+                product as ICardData
+            )
         );
 
     }
 );
-const modalContainer =
-    document.querySelector('#modal-container') as HTMLElement;
 
-const modal = new Modal(modalContainer);
 const basketTemplate =
     document.querySelector('#basket') as HTMLTemplateElement;
 
@@ -77,168 +227,45 @@ const basketElement =
 
 const basket = new Basket(
     basketElement,
-
-    (id) => {
-
-        basketModel.remove(id);
-
-        updateBasketCounter();
-
-        modal.open(
-            basket.render(
-                basketModel.getItems()
-            )
-        );
-
-    },
-
+    events
+);
+events.on(
+    'order:start',
     () => {
 
-    const template =
-        document.querySelector('#order') as HTMLTemplateElement;
-
-
-    const orderElement =
-        template.content
-        .firstElementChild
-        ?.cloneNode(true) as HTMLElement;
-
-
-    const order =
-    new Order(
-        orderElement,
-        (data)=>{
-
-    if(data.next){
-
-        const template =
-            document.querySelector(
-                '#contacts'
-            ) as HTMLTemplateElement;
-
-
-        const contactsElement =
-            template.content
-            .firstElementChild
-            ?.cloneNode(true) as HTMLElement;
-
-
-        const contacts =
-            new Contacts(
-                contactsElement,
-                contactsData => {
-
-
-    if(contactsData.submit){
-
-
-        api.post(
-        '/order',
-        {
-            ...orderModel.data,
-
-            items:
-                basketModel.getItems()
-                .map(item => item.id),
-
-            total:
-                basketModel.getTotal()
-        }
-    )
-        .then((result)=>{
-            const total =
-                basketModel.getTotal();
-
-
-            
-
-
-            basketModel.clear();
-            updateBasketCounter();
-            orderModel.clear();
-
-
-            const template =
-                document.querySelector(
-                    '#success'
-                ) as HTMLTemplateElement;
-
-
-            const success =
-                template.content
-                .firstElementChild
-                ?.cloneNode(true) as HTMLElement;
-
-
-            
-            const description =
-                success.querySelector(
-                    '.order-success__description'
-                );
-
-
-            if(description) {
-
-                description.textContent =
-                    `Списано ${total} синапсов`;
-
-            }
-            const closeButton =
-                success.querySelector('.order-success__close');
-
-
-            closeButton?.addEventListener(
-                'click',
-                () => {
-
-                    modal.close();
-
-                }
-            );
-            modal.open(success);
-        });
-
-
-        return;
-
-    }
-
-
-    orderModel.setData(
-        contactsData
-    );
-
-
-   
-
-}
-            );
-
-
         modal.open(
-            contacts.render()
+            order.render()
         );
 
-
-        return;
-
     }
+);
+const orderTemplate =
+    document.querySelector('#order') as HTMLTemplateElement;
 
 
-    orderModel.setData(data);
+const orderElement =
+    orderTemplate.content
+    .firstElementChild
+    ?.cloneNode(true) as HTMLElement;
 
 
-   
+const order = new Order(
+    orderElement,
+    events
+);
+const contactsTemplate =
+    document.querySelector('#contacts') as HTMLTemplateElement;
 
-}
-    );
+
+const contactsElement =
+    contactsTemplate.content
+    .firstElementChild
+    ?.cloneNode(true) as HTMLElement;
 
 
-    modal.open(
-        order.render()
-    );
-
-}
+const contacts = new Contacts(
+    contactsElement,
+    events
 );
 const basketCounter =
     document.querySelector('.header__basket-counter');
@@ -256,14 +283,6 @@ function updateBasketCounter() {
     }
 
 }
-const presenter = new AppPresenter(
-    events,
-    api,
-    productsModel,
-    basketModel,
-    orderModel,
-    catalog
-);
 const basketButton =
     document.querySelector('.header__basket');
 
@@ -280,4 +299,32 @@ basketButton?.addEventListener(
 
     }
 );
-presenter.init();
+api.get('/product')
+    .then((data: any) => {
+
+
+        productsModel.setProducts(
+            data.items
+        );
+
+
+        catalog.render(
+            data.items
+        );
+
+
+        events.emit(
+            'products:loaded',
+            data.items
+        );
+
+
+    })
+    .catch((error) => {
+
+        console.error(
+            'Products loading error:',
+            error
+        );
+
+    });

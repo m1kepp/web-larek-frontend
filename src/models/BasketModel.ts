@@ -1,34 +1,84 @@
 import { ICardData } from '../components/Card';
+import { EventEmitter } from '../components/base/events';
+
+
 export class BasketModel {
-  private items: ICardData[] = [];
 
-  add(product: ICardData) {
+    private items: ICardData[] = [];
 
-    this.items.push(product);
 
-  }
+    constructor(
+        private events: EventEmitter
+    ) {}
 
-  remove(id:string) {
-    this.items = this.items.filter(item => item.id !== id);
-  }
 
-  clear() {
-    this.items = [];
-  }
+    add(product: ICardData) {
 
-  getItems(): ICardData[] {
+        const exists =
+            this.items.some(
+                item => item.id === product.id
+            );
 
-    return this.items;
 
-  }
+        if (!exists) {
 
-  getTotal(): number {
+            this.items.push(product);
+
+        }
+
+
+        this.events.emit(
+            'basket:changed',
+            this.items
+        );
+
+    }
+
+
+    remove(id: string) {
+
+        this.items =
+            this.items.filter(
+                item => item.id !== id
+            );
+
+
+        this.events.emit(
+            'basket:changed',
+            this.items
+        );
+
+    }
+
+
+    getItems(): ICardData[] {
+
+        return this.items;
+
+    }
+    clear() {
+
+        this.items = [];
+
+
+        this.events.emit(
+            'basket:changed',
+            this.items
+        );
+
+    }
+getTotal() {
+
+    console.log(
+        'TOTAL:',
+        this.items
+    );
 
     return this.items.reduce(
         (sum, item) =>
-            sum + (item.price || 0),
+            sum + (item.price ?? 0),
         0
     );
 
-  }
+}
 }

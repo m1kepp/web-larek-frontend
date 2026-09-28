@@ -1,38 +1,52 @@
 import { IOrderData } from '../models/OrderModel';
+import { EventEmitter } from './base/events';
+
+
 type OrderChange = Partial<IOrderData> & {
     next?: boolean;
 };
+
+
 export class Order {
 
     protected element: HTMLElement;
-    protected onChange?: (data: OrderChange)=>void;
+    protected events: EventEmitter;
 
 
     constructor(
         element: HTMLElement,
-        onChange?: (data:OrderChange)=>void
+        events: EventEmitter
     ) {
+
         this.element = element;
-        this.onChange = onChange;
+        this.events = events;
+
+
         const nextButton =
-    this.element.querySelector(
-        '.order__button'
-    );
+            this.element.querySelector(
+                '.order__button'
+            ) as HTMLButtonElement;
 
 
         nextButton?.addEventListener(
             'click',
             () => {
 
-                this.onChange?.({
-                    next: true
-                });
+                this.events.emit(
+                    'order:next',
+                    {
+                        next: true
+                    }
+                );
 
             }
         );
 
+
         const buttons =
-            this.element.querySelectorAll('.button_alt');
+            this.element.querySelectorAll(
+                '.button_alt'
+            );
 
 
         buttons.forEach(button => {
@@ -41,23 +55,31 @@ export class Order {
                 'click',
                 () => {
 
+
                     buttons.forEach(btn =>
-                        btn.classList.remove('button_alt-active')
+                        btn.classList.remove(
+                            'button_alt-active'
+                        )
                     );
 
 
                     button.classList.add(
                         'button_alt-active'
                     );
+
+
+                    this.events.emit(
+                        'order:change',
+                        {
+                            payment:
+                                button.textContent === 'Онлайн'
+                                    ? 'online'
+                                    : 'cash'
+                        }
+                    );
+
+
                     this.validate();
-
-
-                    this.onChange?.({
-                        payment:
-                            button.textContent === 'Онлайн'
-                            ? 'online'
-                            : 'cash'
-                    });
 
                 }
             );
@@ -75,10 +97,14 @@ export class Order {
             'input',
             () => {
 
-                this.onChange?.({
-                    address:
-                        addressInput.value
-                });
+                this.events.emit(
+                    'order:change',
+                    {
+                        address: addressInput.value
+                    }
+                );
+
+
                 this.validate();
 
             }
@@ -87,33 +113,38 @@ export class Order {
     }
 
 
-    render() {
-        return this.element;
+    private validate() {
+
+        const button =
+            this.element.querySelector(
+                '.order__button'
+            ) as HTMLButtonElement;
+
+
+        const payment =
+            this.element.querySelector(
+                '.button_alt-active'
+            );
+
+
+        const address =
+            (
+                this.element.querySelector(
+                    'input[name="address"]'
+                ) as HTMLInputElement
+            ).value;
+
+
+        button.disabled =
+            !payment || !address;
+
     }
-private validate() {
-
-    const button =
-        this.element.querySelector(
-            '.order__button'
-        ) as HTMLButtonElement;
 
 
-    const payment =
-        this.element.querySelector(
-            '.button_alt-active'
-        );
+    render() {
 
+        return this.element;
 
-    const address =
-        (
-        this.element.querySelector(
-            'input[name="address"]'
-        ) as HTMLInputElement
-        ).value;
+    }
 
-
-    button.disabled =
-        !payment || !address;
-
-}
 }
