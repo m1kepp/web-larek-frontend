@@ -3,15 +3,33 @@ export class Modal {
     protected container: HTMLElement;
 
     constructor(container: HTMLElement) {
+
         this.container = container;
+
 
         const closeButton =
             this.container.querySelector('.modal__close');
+
 
         closeButton?.addEventListener(
             'click',
             () => this.close()
         );
+
+
+        this.container.addEventListener(
+            'click',
+            (event) => {
+
+                if (event.target === this.container) {
+
+                    this.close();
+
+                }
+
+            }
+        );
+
     }
 
 
@@ -32,5 +50,5 @@ export class Modal {
     close() {
         this.container.classList.remove('modal_active');
     }
-
+    
 }

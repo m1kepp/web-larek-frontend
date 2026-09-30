@@ -230,6 +230,16 @@ const basket = new Basket(
     events
 );
 events.on(
+    'basket:changed',
+    () => {
+
+        basket.render(
+            basketModel.getItems()
+        );
+
+    }
+);
+events.on(
     'order:start',
     () => {
 

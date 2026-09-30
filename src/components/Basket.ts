@@ -34,17 +34,7 @@ export class Basket {
         const button =
             this.element.querySelector(
                 '.basket__button'
-            ) as HTMLButtonElement;
-        button?.addEventListener(
-            'click',
-            () => {
-
-                this.events.emit(
-                    'order:start'
-                );
-
-            }
-        );    
+            ) as HTMLButtonElement; 
 
         if (!list || !price) {
             return this.element;
@@ -148,6 +138,20 @@ export class Basket {
 
             button.disabled =
                 items.length === 0;
+
+
+            button.onclick = () => {
+
+                if (items.length === 0) {
+                    return;
+                }
+
+
+                this.events.emit(
+                    'order:start'
+                );
+
+            };
 
         }
 

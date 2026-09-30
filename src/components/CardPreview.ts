@@ -10,7 +10,9 @@ export class CardPreview {
     constructor(
         element: HTMLElement,
         protected events: EventEmitter
-    ) {
+    ) 
+    
+    {
 
         this.element = element;
 
@@ -32,7 +34,45 @@ export class CardPreview {
         );
 
     }
+    protected setCategoryColor(
+    category: HTMLElement,
+    type: string
+) {
 
+    const categoryMap: Record<string, string> = {
+
+        'софт-скил': 'card__category_soft',
+        'хард-скил': 'card__category_hard',
+        'другое': 'card__category_other',
+        'дополнительное': 'card__category_additional',
+        'кнопка': 'card__category_button'
+
+    };
+
+
+    Object.values(categoryMap)
+        .forEach(className => {
+
+            category.classList.remove(
+                className
+            );
+
+        });
+
+
+    const className =
+        categoryMap[type];
+
+
+    if (className) {
+
+        category.classList.add(
+            className
+        );
+
+    }
+
+}
 
     protected product!: ICardData;
 
@@ -51,7 +91,9 @@ export class CardPreview {
 
 
         const category =
-            this.element.querySelector('.card__category');
+        this.element.querySelector(
+            '.card__category'
+        ) as HTMLElement;
 
 
         const description =
@@ -83,7 +125,14 @@ export class CardPreview {
 
         if (category) {
 
-            category.textContent = product.category;
+            category.textContent =
+                product.category;
+
+
+            this.setCategoryColor(
+                category,
+                product.category.toLowerCase()
+            );
 
         }
 

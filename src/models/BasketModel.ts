@@ -69,11 +69,6 @@ export class BasketModel {
     }
 getTotal() {
 
-    console.log(
-        'TOTAL:',
-        this.items
-    );
-
     return this.items.reduce(
         (sum, item) =>
             sum + (item.price ?? 0),
