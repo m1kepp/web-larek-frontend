@@ -1,6 +1,4 @@
-import { ICardData } from './Card';
 import { EventEmitter } from './base/events';
-
 
 export class Basket {
 
@@ -17,7 +15,10 @@ export class Basket {
     }
 
 
-    render(items: ICardData[]) {
+    render(
+        cards: HTMLElement[],
+        total: number
+    ) {
 
         const list =
             this.element.querySelector(
@@ -44,90 +45,12 @@ export class Basket {
         list.innerHTML = '';
 
 
-        items.forEach(
-            (item, index) => {
+        cards.forEach(card => {
 
+            list.append(card);
 
-                const template =
-                    document.querySelector(
-                        '#card-basket'
-                    ) as HTMLTemplateElement;
+        });
 
-
-                const card =
-                    template.content
-                    .firstElementChild
-                    ?.cloneNode(true) as HTMLElement;
-
-
-                const title =
-                    card.querySelector(
-                        '.card__title'
-                    );
-
-
-                const itemPrice =
-                    card.querySelector(
-                        '.card__price'
-                    );
-
-
-                const number =
-                    card.querySelector(
-                        '.basket__item-index'
-                    );
-
-
-                const deleteButton =
-                    card.querySelector(
-                        '.basket__item-delete'
-                    );
-
-
-                if (title) {
-                    title.textContent = item.title;
-                }
-
-
-                if (itemPrice) {
-                    itemPrice.textContent =
-                        `${item.price ?? 0} синапсов`;
-                }
-
-
-                if (number) {
-                    number.textContent =
-                        String(index + 1);
-                }
-
-
-                deleteButton?.addEventListener(
-                    'click',
-                    () => {
-
-                        this.events.emit(
-                            'basket:remove',
-                            {
-                                id: item.id
-                            }
-                        );
-
-                    }
-                );
-
-
-                list.append(card);
-
-            }
-        );
-
-
-        const total =
-            items.reduce(
-                (sum, item) =>
-                    sum + (item.price ?? 0),
-                0
-            );
 
 
         price.textContent =
@@ -137,12 +60,12 @@ export class Basket {
         if (button) {
 
             button.disabled =
-                items.length === 0;
+                cards.length === 0;
 
 
             button.onclick = () => {
 
-                if (items.length === 0) {
+                if (cards.length === 0) {
                     return;
                 }
 

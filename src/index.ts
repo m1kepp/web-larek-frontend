@@ -9,7 +9,7 @@ import { OrderModel } from './models/OrderModel';
 import { Modal } from './components/Modal';
 import { Order } from './components/Order';
 import { Contacts } from './components/Contacts';
-import { ICardData } from './components/Card';
+import { ICardData, Card } from './components/Card';
 import { IOrderData } from './models/OrderModel';
 const events = new EventEmitter();
 
@@ -39,14 +39,7 @@ events.on(
 
     }
 );
-events.on(
-    'basket:changed',
-    () => {
 
-        updateBasketCounter();
-
-    }
-);
 const orderModel = new OrderModel(events);
 events.on(
     'order:change',
@@ -229,26 +222,79 @@ const basket = new Basket(
     basketElement,
     events
 );
-events.on(
-    'basket:changed',
-    () => {
+function createBasketCards(): HTMLElement[] {
 
-        basket.render(
-            basketModel.getItems()
-        );
+    return basketModel.getItems()
+        .map((item, index) => {
 
-    }
-);
-events.on(
-    'order:start',
-    () => {
+            const template =
+                document.querySelector(
+                    '#card-basket'
+                ) as HTMLTemplateElement;
 
-        modal.open(
-            order.render()
-        );
 
-    }
-);
+            const card =
+                template.content
+                .firstElementChild
+                ?.cloneNode(true) as HTMLElement;
+
+
+            const title =
+                card.querySelector('.card__title');
+
+
+            const itemPrice =
+                card.querySelector('.card__price');
+
+
+            const number =
+                card.querySelector('.basket__item-index');
+
+
+            const deleteButton =
+                card.querySelector('.basket__item-delete');
+
+
+            if (title) {
+                title.textContent =
+                    item.title;
+            }
+
+
+            if (itemPrice) {
+                itemPrice.textContent =
+                    `${item.price ?? 0} синапсов`;
+            }
+
+
+            if (number) {
+                number.textContent =
+                    String(index + 1);
+            }
+
+
+            deleteButton?.addEventListener(
+                'click',
+                () => {
+
+                    events.emit(
+                        'basket:remove',
+                        {
+                            id: item.id
+                        }
+                    );
+
+                }
+            );
+
+
+            return card;
+
+        });
+
+}
+
+
 const orderTemplate =
     document.querySelector('#order') as HTMLTemplateElement;
 
@@ -262,6 +308,16 @@ const orderElement =
 const order = new Order(
     orderElement,
     events
+);
+events.on(
+    'order:start',
+    () => {
+
+        modal.open(
+            order.render()
+        );
+
+    }
 );
 const contactsTemplate =
     document.querySelector('#contacts') as HTMLTemplateElement;
@@ -293,6 +349,19 @@ function updateBasketCounter() {
     }
 
 }
+events.on(
+    'basket:changed',
+    () => {
+
+        updateBasketCounter();
+
+        basket.render(
+            createBasketCards(),
+            basketModel.getTotal()
+        );
+
+    }
+);
 const basketButton =
     document.querySelector('.header__basket');
 
@@ -303,8 +372,9 @@ basketButton?.addEventListener(
 
         modal.open(
             basket.render(
-                basketModel.getItems()
-            )
+            createBasketCards(),
+            basketModel.getTotal()
+        )
         );
 
     }
@@ -318,9 +388,47 @@ api.get('/product')
         );
 
 
-        catalog.render(
-            data.items
+        const cards =
+    data.items.map((item: ICardData) => {
+
+        const template =
+            document.querySelector(
+                '#card-catalog'
+            ) as HTMLTemplateElement;
+
+
+        const cardElement =
+            template.content
+            .firstElementChild
+            ?.cloneNode(true) as HTMLElement;
+
+
+        const card =
+            new Card(cardElement);
+
+
+        card.render(item);
+
+
+        cardElement.addEventListener(
+            'click',
+            () => {
+
+                events.emit(
+                    'product:selected',
+                    item
+                );
+
+            }
         );
+
+
+        return cardElement;
+
+    });
+
+
+catalog.render(cards);
 
 
         events.emit(

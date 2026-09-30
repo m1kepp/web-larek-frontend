@@ -1,6 +1,6 @@
-import { ICardData } from './Card';
-import { Card } from './Card';
 import { EventEmitter } from './base/events';
+
+
 export class Catalog {
 
     protected element: HTMLElement;
@@ -16,50 +16,17 @@ export class Catalog {
     }
 
 
-    render(items: ICardData[]) {
-
+    render(cards: HTMLElement[]) {
 
         this.element.innerHTML = '';
 
 
-        items.forEach(item => {
+        cards.forEach(card => {
 
-    const template =
-        document.querySelector('#card-catalog') as HTMLTemplateElement;
+            this.element.append(card);
 
-
-    const cardElement =
-        template.content
-        .firstElementChild
-        ?.cloneNode(true) as HTMLElement;
-
-
-    const card =
-        new Card(cardElement);
-
-
-    card.render(item);
-
-
-    cardElement.addEventListener(
-        'click',
-        () => {
-
-            this.events.emit(
-            'product:selected',
-            item
-        );
-
-        }
-    );
-
-
-    this.element.append(cardElement);
-
-});
-
+        });
 
     }
-
 
 }
